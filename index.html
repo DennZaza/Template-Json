@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Config Builder</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      padding: 20px;
+      gap: 20px;
+    }
+    .form-container, .preview-container {
+      flex: 1;
+    }
+    input, textarea {
+      width: 90%;
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    .channel-group {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      position: relative;
+      border-radius: 8px;
+    }
+    .remove-channel {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 8px;
+      cursor: pointer;
+    }
+    .remove-channel i {
+      pointer-events: none;
+    }
+    .add-btn, .generate-btn, .copy-btn {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .add-btn {
+      background: #4CAF50;
+    }
+    .generate-btn {
+      background: #2196F3;
+    }
+    .copy-btn {
+      background: #9C27B0;
+      margin-left: 10px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .button-row {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <label>Token</label>
+    <input type="text" id="token" placeholder="Enter token">
+
+    <h3>Channels</h3>
+    <div id="channelsContainer"></div>
+
+    <button type="button" class="add-btn" id="addChannel">
+      <i class="fas fa-plus"></i>
+    </button>
+
+    <label>Webhook URL</label>
+    <input type="text" id="webhook" placeholder="Enter webhook URL">
+
+    <div class="button-row">
+      <button type="button" onclick="generateJSON()" class="generate-btn">
+        <i class="fas fa-download"></i>
+      </button>
+      <button type="button" onclick="copyJSON()" class="copy-btn">
+        <i class="fas fa-copy"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="preview-container">
+    <h3>JSON Preview</h3>
+    <pre id="jsonPreview">{}</pre>
+  </div>
+
+  <script>
+    document.getElementById("addChannel").addEventListener("click", () => addChannel());
+
+    function addChannel(id = "", message = "", delay = 1) {
+      const group = document.createElement("div");
+      group.className = "channel-group";
+
+      group.innerHTML = `
+        <button type="button" class="remove-channel">
+          <i class="fas fa-times"></i>
+        </button>
+        <label>Channel ID</label>
+        <input type="text" name="channelId" value="${id}" required>
+
+        <label>Message</label>
+        <textarea name="channelMessage" required>${message}</textarea>
+
+        <label>Delay in Minutes</label>
+        <input type="number" name="channelDelay" value="${delay}" required min="1">
+      `;
+
+      group.querySelector(".remove-channel").addEventListener("click", () => {
+        group.remove();
+        updatePreview();
+      });
+
+      document.getElementById("channelsContainer").appendChild(group);
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const token = document.getElementById("token").value;
+      const webhook = document.getElementById("webhook").value;
+
+      const channels = Array.from(document.querySelectorAll(".channel-group")).map(group => ({
+        id: group.querySelector('input[name="channelId"]').value,
+        message: group.querySelector('textarea[name="channelMessage"]').value,
+        delay_in_minutes: parseInt(group.querySelector('input[name="channelDelay"]').value) || 1
+      }));
+
+      const json = {
+        token,
+        channels,
+        webhook_url: webhook
+      };
+
+      document.getElementById("jsonPreview").textContent = JSON.stringify(json, null, 4);
+    }
+
+    document.querySelectorAll("input, textarea").forEach(input => {
+      input.addEventListener("input", updatePreview);
+    });
+
+    function generateJSON() {
+      const content = document.getElementById("jsonPreview").textContent;
+      const blob = new Blob([content], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "config.json";
+      link.click();
+    }
+
+    function copyJSON() {
+      const json = document.getElementById("jsonPreview").textContent;
+      navigator.clipboard.writeText(json).then(() => {
+        alert("✅ JSON copied to clipboard!");
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      addChannel();
+    });
+  </script>
+
+</body>
+</html>

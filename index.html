@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JSON Config Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Config</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     body {
@@ -89,6 +90,49 @@
       display: flex;
       align-items: center;
       margin-top: 10px;
+    }
+    
+    /* Add responsive styles */
+    @media screen and (max-width: 768px) {
+      body {
+        flex-direction: column;
+        padding: 10px;
+      }
+      
+      .form-container, .preview-container {
+        width: 100%;
+      }
+      
+      input, textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .channel-group {
+        margin: 10px 0;
+      }
+      
+      pre {
+        max-height: 40vh;
+        font-size: 14px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      h3 {
+        font-size: 18px;
+      }
+      
+      .button-row {
+        justify-content: space-between;
+      }
+      
+      .add-btn, .generate-btn, .copy-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>

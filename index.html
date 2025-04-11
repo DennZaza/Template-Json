@@ -8,11 +8,26 @@
     body {
       font-family: sans-serif;
       display: flex;
+      flex-direction: row;
+      justify-content: center;
       padding: 20px;
       gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+      box-sizing: border-box;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 80vh;
     }
     .form-container, .preview-container {
       flex: 1;
+      min-width: 0;
     }
     input, textarea {
       width: 90%;
@@ -78,8 +93,9 @@
   </style>
 </head>
 <body>
-
+  
   <div class="form-container">
+    <h1>Boolua Json Generator</h1>
     <label>Token</label>
     <input type="text" id="token" placeholder="Enter token">
 
@@ -108,79 +124,92 @@
     <pre id="jsonPreview">{}</pre>
   </div>
 
-  <script>
-    document.getElementById("addChannel").addEventListener("click", () => addChannel());
+  <!-- Replace your addChannel() with this version -->
+<script>
+  document.getElementById("addChannel").addEventListener("click", () => addChannel());
 
-    function addChannel(id = "", message = "", delay = 1) {
-      const group = document.createElement("div");
-      group.className = "channel-group";
+  function addChannel(id = "", message = "", delay = 1) {
+    const group = document.createElement("div");
+    group.className = "channel-group";
 
-      group.innerHTML = `
-        <button type="button" class="remove-channel">
-          <i class="fas fa-times"></i>
-        </button>
-        <label>Channel ID</label>
-        <input type="text" name="channelId" value="${id}" required>
+    group.innerHTML = `
+      <button type="button" class="remove-channel">
+        <i class="fas fa-times"></i>
+      </button>
+      <label>Channel ID</label>
+      <input type="text" name="channelId" value="${id}" oninput="updatePreview()" required>
 
-        <label>Message</label>
-        <textarea name="channelMessage" required>${message}</textarea>
+      <label>Message</label>
+      <textarea name="channelMessage" oninput="updatePreview()" required>${message}</textarea>
 
-        <label>Delay in Minutes</label>
-        <input type="number" name="channelDelay" value="${delay}" required min="1">
-      `;
+      <label>Delay in Minutes</label>
+      <input type="number" name="channelDelay" value="${delay}" oninput="updatePreview()" required min="1">
+    `;
 
-      group.querySelector(".remove-channel").addEventListener("click", () => {
-        group.remove();
-        updatePreview();
-      });
-
-      document.getElementById("channelsContainer").appendChild(group);
+    group.querySelector(".remove-channel").addEventListener("click", () => {
+      group.remove();
       updatePreview();
-    }
-
-    function updatePreview() {
-      const token = document.getElementById("token").value;
-      const webhook = document.getElementById("webhook").value;
-
-      const channels = Array.from(document.querySelectorAll(".channel-group")).map(group => ({
-        id: group.querySelector('input[name="channelId"]').value,
-        message: group.querySelector('textarea[name="channelMessage"]').value,
-        delay_in_minutes: parseInt(group.querySelector('input[name="channelDelay"]').value) || 1
-      }));
-
-      const json = {
-        token,
-        channels,
-        webhook_url: webhook
-      };
-
-      document.getElementById("jsonPreview").textContent = JSON.stringify(json, null, 4);
-    }
-
-    document.querySelectorAll("input, textarea").forEach(input => {
-      input.addEventListener("input", updatePreview);
     });
 
-    function generateJSON() {
-      const content = document.getElementById("jsonPreview").textContent;
-      const blob = new Blob([content], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "config.json";
-      link.click();
-    }
+    document.getElementById("channelsContainer").appendChild(group);
+    updatePreview();
+  }
 
-    function copyJSON() {
-      const json = document.getElementById("jsonPreview").textContent;
-      navigator.clipboard.writeText(json).then(() => {
-        alert("✅ JSON copied to clipboard!");
-      });
-    }
+  // Real-time binding for token & webhook
+  document.getElementById("token").addEventListener("input", updatePreview);
+  document.getElementById("webhook").addEventListener("input", updatePreview);
 
-    window.addEventListener("DOMContentLoaded", () => {
-      addChannel();
+  function updatePreview() {
+    const token = document.getElementById("token").value;
+    const webhook = document.getElementById("webhook").value;
+
+    const channels = Array.from(document.querySelectorAll(".channel-group")).map(group => ({
+      id: group.querySelector('input[name="channelId"]').value,
+      message: group.querySelector('textarea[name="channelMessage"]').value,
+      delay_in_minutes: parseInt(group.querySelector('input[name="channelDelay"]').value) || 1
+    }));
+
+    let preview = `{\n`;
+    preview += `  "token": "${token}",\n`;
+    preview += `  "channels": [\n`;
+
+    channels.forEach((channel, index) => {
+      const escapedMessage = channel.message.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      preview += `    {\n`;
+      preview += `      "id": "${channel.id}",\n`;
+      preview += `      "message": """${escapedMessage}""",\n`;
+      preview += `      "delay_in_minutes": ${channel.delay_in_minutes}\n`;
+      preview += `    }${index < channels.length - 1 ? "," : ""}\n`;
     });
-  </script>
+
+    preview += `  ],\n`;
+    preview += `  "webhook_url": "${webhook}"\n`;
+    preview += `}`;
+
+    document.getElementById("jsonPreview").textContent = preview;
+  }
+
+  function generateJSON() {
+    const content = document.getElementById("jsonPreview").textContent;
+    const blob = new Blob([content], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "config.json";
+    link.click();
+  }
+
+  function copyJSON() {
+    const json = document.getElementById("jsonPreview").textContent;
+    navigator.clipboard.writeText(json).then(() => {
+      alert("✅ JSON copied to clipboard!");
+    });
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    addChannel(); // default channel on load
+  });
+</script>
+
 
 </body>
 </html>
